@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension id="url_connector" status="unreleased" xmlns="http://symphony-cms.com/schemas/extension/1.0">
+    <name>URL Connector</name>
+    <description>URL rerouting/redirecton.</description>
+    <repo type="github">https://github.com/Petertron/url_connector</repo>
+    <!--<url type="discuss">http://symphony-cms.com/discuss/thread/</url>-->
+    <types>
+        <type></type>
+    </types>
+    <authors>
+        <author>
+            <name github="Petertron" symphony="Petertron">Peter Skirenko</name>
+            <website>http://www.getsymphony.com/get-involved/member/Petertron/</website>
+        </author>
+    </authors>
+    <releases>
+        <release version="0.1.0" date="2015-04-00" min="2.5">
+        </release>
+    </releases>
+</extension> 
