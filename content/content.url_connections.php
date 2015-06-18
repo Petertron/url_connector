@@ -19,15 +19,26 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
     const E_PARAM_USED = 3;
     const E_VAR_USED = 4;
 
-    private $messages = array(
-        self::E_REQ_FIELD => 'This is a required field',
-        self::E_PARAM_DUP => 'Parameter duplication',
-        self::E_PARAM_USED => 'Parameter used already',
-        self::E_VAR_USED => 'Variable used already'
-    );
-
     private $_errors = array();
     //protected $_hilights = array();
+
+    public function __construct()
+    {
+        parent::__construct();
+/*
+        $this->error_messages = array(
+            'required-field' => __('This is a required field'),
+            'param-duplication' => __('Parameter duplication'),
+            'param-used' => __('Parameter used already'),
+            'var-used' => __('Variable used already')
+        );*/
+        $this->error_messages = array(
+            self::E_REQ_FIELD => __('This is a required field'),
+            self::E_PARAM_DUP => __('Parameter duplication'),
+            self::E_PARAM_USED => __('Parameter used already'),
+            self::E_VAR_USED => __('Variable used already')
+        );
+    }
 
     public function __viewIndex()
     {
@@ -273,11 +284,11 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
 
         $this->Form->appendChild($fieldset);
 
-
         // Path parameter conditions
 
         $blueprint = array(
             'legend' => __('Path Parameter Conditions'),
+            'legend-id' => 'parameters-legend',
             'base_field' => 'param_tests',
             'name_label' => __('Parameter Name'),
             'templates' => array(
@@ -449,14 +460,14 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                 if (preg_match_all('/(\{[\w\-]+\})/', $path_from, $matches)) {
                     $path_param_matches = $matches[0];
                     if (count(array_unique($path_param_matches)) < count($path_param_matches)) {
-                        throw new Exception('path_from', self::E_PARAM_DUP);
+                        $this->setError('path_from', self::E_PARAM_DUP);
                     }
                 }
     
                 $path_to = trim($fields['path_to']);
                 $db_fields['path_to'] = $path_to;
                 if (!$path_to) {
-                    throw new Exception('path_to', self::E_REQ_FIELD);
+                    $this->setError('path_to', self::E_REQ_FIELD);
                 }
 
                 $run_data = array(
@@ -478,23 +489,26 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                     $values = $fields['param_tests']['value'];
                     for ($row_num = 0; $row_num < count($actions); $row_num++) {
                         if (!($name = trim($names[$row_num]))) {
-                            throw new Exception('param_tests' . $row_num . 'name', self::E_REQ_FIELD);
+                            //$this->_errors['param_tests' . $row_num . 'name'] = self::E_REQ_FIELD;
+                            $this->setError('param_tests' . $row_num . 'name', self::E_REQ_FIELD);
                         }
                         if (!($value = trim($values[$row_num]))) {
-                            throw new Exception('param_tests' . $row_num . 'value', self::E_REQ_FIELD);
+                            $this->setError('param_tests' . $row_num . 'value', self::E_REQ_FIELD);
                         }
                         $action = $actions[$row_num];
                         if ($action == 'type') {
                             if (!isset($run_data['param_type_tests'][$name])) {
                                 $run_data['param_type_tests'][$name] = $value;
                             } else {
-                                throw new Exception('param_tests' . $row_num . 'name', self::E_PARAM_USED);
+                                $this->setError('param_tests' . $row_num . 'name', self::E_PARAM_USED);
+                                //$this->_errors['param_tests' . $row_num . 'name'] = self::E_PARAM_USED;
                             }
                         } elseif ($action == 'regexp') {
                             if (!isset($param_regexps[$name])) {
                                 $param_regexps[$name] = $value;
                             } else {
-                                throw new Exception('param_tests' . $row_num . 'name', self::E_PARAM_USED);
+                                $this->setError('param_tests' . $row_num . 'name', self::E_PARAM_USED);
+                                //$this->_errors['param_tests' . $row_num . 'name'] = self::E_PARAM_USED;
                             }
                         }
                         $names[$row_num] = $name;
@@ -513,16 +527,18 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                     $values = $fields['var_tests']['value'];
                     for ($row_num = 0; $row_num < count($actions); $row_num++) {
                         if (!($name = trim($names[$row_num]))) {
-                            throw new Exception('var_tests' . $row_num . 'name', self::E_REQ_FIELD);
+                            $this->setError('var_tests' . $row_num . 'name', self::E_REQ_FIELD);
                         }
                         if (!($value = trim($values[$row_num]))) {
-                            throw new Exception('var_tests' . $row_num . 'value', self::E_REQ_FIELD);
+                            $this->setError('var_tests' . $row_num . 'value', self::E_REQ_FIELD);
+                            //$this->_errors['var_tests' . $row_num . 'value'] = self::E_REQ_FIELD;
                         }
                         $action = $actions[$row_num];
                         if (!isset($run_data['var_tests'][$name])) {
                             $run_data['var_tests'][$name] = array($action, $value);
                         } else {
-                            throw new Exception('var_tests' . $row_num . 'name', self::E_VAR_USED);
+                            $this->setError('var_tests' . $row_num . 'name', self::E_VAR_USED);
+                            //$this->_errors['var_tests' . $row_num . 'name'] = self::E_VAR_USED;
                         }
                         $names[$row_num] = $name;
                         $values[$row_num] = $value;
@@ -605,11 +621,11 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                 }
             }
 
-            // If there were any errors, either with pre processing or because of a
-            // duplicate page, return.
+            // If there were any errors, return.
             if (is_array($this->_errors) && !empty($this->_errors)) {
                 return $this->pageAlert(
-                    __('An error occurred while processing this form. See below for details.'),
+                    //__('An error occurred while processing this form. See below for details.'),
+                    __('Some errors were encountered while attempting to save.'),
                     Alert::ERROR
                 );
             }
@@ -681,7 +697,11 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
 
         $fieldset = new XMLElement('fieldset');
         $fieldset->setAttribute('class', 'settings');
-        $fieldset->appendChild(new XMLElement('legend', __($blueprint['legend'])));
+        $fieldset->appendChild(new XMLElement(
+	  'legend',
+	  __($blueprint['legend']),
+	  array('id' => 'parameters-duplicator')
+	));
 
         $tmpl_name_field = Widget::Label(
             $blueprint['name_label'],
@@ -691,6 +711,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
 
         $group = new XMLElement('div');
         $group->setAttribute('class', 'frame');
+        $group->setAttribute('id', $base_field . '-duplicator');
         $ol = new XMLElement('ol');
         $ol->setAttribute('data-add', __('Add condition'));
         $ol->setAttribute('data-remove', __('Remove condition'));
@@ -701,7 +722,13 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
             $li->setAttribute('class', 'template');
             $li->setAttribute('data-name', $template['data_name']);
             $li->setAttribute('data-type', $template['data_type']);
-            $li->appendChild(new XMLElement('header', $template['header']));
+            $header = new XMLElement('header');
+            $header->appendChild(new XMLElement(
+                'h4',
+                '<strong>New Condition</strong><span>' . $template['header'] . '</span>',
+                array('class' => 'frame-header', 'data-name' => $template['header'])
+            ));
+            $li->appendChild($header);
             // Action field (hidden)
             $li->appendChild(Widget::Input($input_array_action, $action, 'hidden'));
 
@@ -733,7 +760,14 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                 $template = $blueprint['templates'][$action];
                 $li = new XMLElement('li');
                 $li->setAttribute('class', 'instance expanded');
-                $li->appendChild(new XMLElement('header', $template['header']));
+                $header = new XMLElement('header');
+                $header->appendChild(new XMLElement(
+                    'h4',
+                    '<strong>' . $name . '</strong><span>' . $template['header'] . '</span>',
+                    array('class' => 'frame-header', 'data-name' => $template['header'])
+                ));
+                $li->appendChild($header);
+                //$li->appendChild(new XMLElement('header', $template['header'], array('class' => 'frame-header')));
                 // Action field (hidden)
                 $li->appendChild(Widget::Input($input_array_action, $action, 'hidden'));
 
@@ -792,10 +826,8 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         return $return;
     }
 
-    function setError($field, $message)
+    function setError($field, $error)
     {
-        if (empty($this->_errors)) {
-            $this->_errors[$field] = $message;
-        }
+        $this->_errors[$field] = $this->error_messages[$error];
     }
 }
