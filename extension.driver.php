@@ -13,16 +13,16 @@ class extension_URL_Connector extends Extension
                 `path_from` varchar(255) DEFAULT NULL,
                 `path_to` varchar(255) DEFAULT NULL,
                 `action` varchar(255) DEFAULT NULL,
-                `num_conditions` tinyint(3) unsigned,
                 `param_tests` varchar(1023) DEFAULT NULL,
-                `var_tests` varchar(1023) DEFAULT NULL,
+                `include_php` bit DEFAULT FALSE,
+                `php` varchar(8191) DEFAULT NULL,
                 `run_data` varchar(4095) DEFAULT NULL,
                 `sortorder` int(11) unsigned NOT NULL,
                 PRIMARY KEY (`id`)
             )  ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
         ");
     }
-        
+
     /**
      * Uninstall
      */
@@ -120,11 +120,16 @@ class extension_URL_Connector extends Extension
         $ignores = array('GET' => 'route post', 'POST' => 'route get');
         $ignore = $ignores[$_SERVER['REQUEST_METHOD']];
         $path_given = trim($context['page'], '/');
-        $sql = "SELECT path_to, action, run_data FROM `tbl_url_connections` ORDER BY sortorder";
+        $sql = "SELECT path_to, action, php, run_data FROM `tbl_url_connections` ORDER BY sortorder";
         $routes = Symphony::Database()->fetch($sql);
         $route_matched = null;
 
-        foreach ($routes as $route) {
+        //foreach ($routes as $route) {
+        //while (!$route_matched && $route = each($routes)[1]) {
+        for (;
+            !$route_matched && $route = current($routes);
+            next($routes)
+        ) {
             if ($route['action'] == $ignore) continue;
             if (!$route['run_data']) continue;
             $run_data = unserialize($route['run_data']);
@@ -132,69 +137,34 @@ class extension_URL_Connector extends Extension
 
             // Path matched:
 
-            $proceed = true;
-
             // Make path parameter array
             if ($run_data['param_names']) {
                 array_shift($matches);
                 $path_params = array_combine($run_data['param_names'], $matches);
             }
 
-            while ($proceed && list($name, $type) = each($run_data['param_type_tests'])) {
+            $conditions_met = true;
+
+            while ($conditions_met && list($name, $type) = each($run_data['param_type_tests'])) {
                 switch ($type) {
                     case 'numeric':
-                        $proceed = is_numeric($path_params[$name]);
+                        $conditions_met = is_numeric($path_params[$name]);
                         break;
                     case 'non-numeric':
-                        $proceed = !is_numeric($path_params[$name]);
+                        $conditions_met = !is_numeric($path_params[$name]);
+                        break;
+                    default:
                         break;
                 }
             }
-            if (!$proceed) continue;
+            if (!$conditions_met) continue;
 
-            // Request/server variable conditions
-
-            $vars = array_merge($_REQUEST, $_SERVER);
-
-            while ($proceed && list($name, $values) = each($run_data['var_tests'])) {
-                list($action, $value) = $values;
-                if (!array_key_exists($name, $vars)) {
-                    $proceed = ($action == 'status' && $value == 'absent');
-                } else {
-                    $var = $vars[$name];
-                    if ($action == 'status') {
-                        if ($value == 'present') {
-                            $proceed = true;
-                        } elseif (is_string($var) && strlen($var) > 0) {
-                            switch ($value) {
-                                case 'string':
-                                    $proceed = true;
-                                    break;
-                                case 'numeric':
-                                    $proceed = is_numeric($var);
-                                    break;
-                                case 'non-numeric':
-                                    $proceed = !is_numeric($var);
-                                    break;
-                            }
-                        } else {
-                            $proceed = false;
-                        }
-                    } elseif ($action == 'equality') {
-                        $proceed = ($var == $value);
-                    } elseif ($action == 'inequality') {
-                        $proceed = ($var != $value);
-                    } elseif ($action == 'regexp') {
-                        $proceed = (bool) preg_match($value, $vars);
-                    }
-                }
-                if (!$proceed) continue;
+            // Execute PHP if there is any
+            if ($route['php']) {
+                if ($this->evalPHP($route['php']) === false) continue;
             }
 
-            if ($proceed) {
-                $route_matched = $route['path_to'];
-                break;
-            }
+            $route_matched = $route['path_to'];
         }
 
         if ($route_matched) {
@@ -220,12 +190,17 @@ class extension_URL_Connector extends Extension
                     header('Location:' . $route_matched, true, (int) $action_type[1]);
                     exit;
             }
+        } else {
+            // Route not matched.
+            $page = FrontEnd::Page()->resolvePage($context['page']);
+            if (!$page || in_array('NDA', $page['type'])) {
+                throw new FrontendPageNotFoundException();
+            }
         }
-        
-        // Route not matched.
-        $page = FrontEnd::Page()->resolvePage($context['page']);
-        if (in_array('NDA', $page['type'])) {
-            throw new FrontendPageNotFoundException();
-        }
+    }
+
+    function evalPHP($php)
+    {
+        return eval($php);
     }
 }

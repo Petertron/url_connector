@@ -14,7 +14,7 @@
         </author>
     </authors>
     <releases>
-        <release version="0.1.0" date="2015-04-00" min="2.5">
+        <release version="0.1.0" date="2015-04-00" min="2.5" max="2.6.99">
         </release>
     </releases>
-</extension> 
+</extension>

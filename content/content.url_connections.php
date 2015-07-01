@@ -1,14 +1,14 @@
 <?php
 
 /**
- * @package content
- */
+* @package content
+*/
 
 /**
- * Developers can create new Frontend page routes from this class. It provides
- * an index view of all the pages in this Symphony install as well as the
- * forms for the creation/editing of a Page
- */
+* Developers can create new Frontend page routes from this class. It provides
+* an index view of all the pages in this Symphony install as well as the
+* forms for the creation/editing of a Page
+*/
 require_once TOOLKIT . '/class.administrationpage.php';
 require_once TOOLKIT . '/class.resourcemanager.php';
 
@@ -54,14 +54,14 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
             array(__('Name'), 'col'),
             array(__('Path From'), 'col'),
             array(__('Path To'), 'col'),
-            array(__('Action'), 'col'),
-            array(__('Conditions'), 'col')
+            array(__('Action'), 'col')/*,
+            array(__('Conditions'), 'col')*/
         );
         $aTableBody = array();
 
-        $sql = "SELECT id, title, path_from, path_to, action, num_conditions, sortorder FROM `tbl_url_connections` ORDER BY sortorder";
+        $sql = "SELECT id, title, path_from, path_to, action, sortorder FROM `tbl_url_connections` ORDER BY sortorder";
         $routes = Symphony::Database()->fetch($sql);
-        
+
         if (!is_array($routes) or empty($routes)) {
             $aTableBody = array(Widget::TableRow(array(
                 Widget::TableData(__('None found.'), 'inactive', null, count($aTableHead))
@@ -92,11 +92,11 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
 
                 $col_action = Widget::TableData($route_actions[$route['action']]);
 
-                if ((int)$route['num_conditions'] > 0) {
+                /*if ((int)$route['num_conditions'] > 0) {
                     $col_conditions = Widget::TableData($route['num_conditions']);
                 } else {
                     $col_conditions = Widget::TableData(__('None'), 'inactive');
-                }
+                }*/
 
                 $aTableBody[] = Widget::TableRow(
                     array($col_title, $col_route_from, $col_route_to, $col_action, $col_conditions),
@@ -127,19 +127,19 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         );
 
         /**
-         * Allows an extension to modify the existing options for this page's
-         * With Selected menu. If the `$options` parameter is an empty array,
-         * the 'With Selected' menu will not be rendered.
-         *
-         * @delegate AddCustomActions
-         * @since Symphony 2.3.2
-         * @param string $context
-         * '/blueprints/pages/'
-         * @param array $options
-         *  An array of arrays, where each child array represents an option
-         *  in the With Selected menu. Options should follow the same format
-         *  expected by `Widget::__SelectBuildOption`. Passed by reference.
-         */
+        * Allows an extension to modify the existing options for this page's
+        * With Selected menu. If the `$options` parameter is an empty array,
+        * the 'With Selected' menu will not be rendered.
+        *
+        * @delegate AddCustomActions
+        * @since Symphony 2.3.2
+        * @param string $context
+        * '/blueprints/pages/'
+        * @param array $options
+        *  An array of arrays, where each child array represents an option
+        *  in the With Selected menu. Options should follow the same format
+        *  expected by `Widget::__SelectBuildOption`. Passed by reference.
+        */
         Symphony::ExtensionManager()->notifyMembers('AddCustomActions', '/blueprints/url-connections/', array(
             'options' => &$options
         ));
@@ -175,7 +175,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                 Administration::instance()->errorPageNotFound();
             }
 
-            foreach (array('param_tests', 'var_tests') as $key) {
+            foreach (array('param_tests') as $key) {
                 $existing[$key] = unserialize($existing[$key]);
             }
         }
@@ -236,6 +236,15 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
 
         $this->appendSubheading(!empty($title) ? $title : __('Untitled'));
 
+        $checkbox = Widget::Input('php', 'yes', 'checkbox', array('id' => 'php-toggle'));
+        if ($fields['include_php']) {
+            $checkbox->setAttribute('checked', 'checked');
+        }
+        $this->Context->prependChild(new XMLElement(
+            'label',
+            $checkbox->generate() . ' ' . __('Include PHP field'),
+            array('class' => 'actions')
+        ));
         $fieldset = new XMLElement('fieldset');
         $fieldset->setAttribute('class', 'settings');
         $fieldset->appendChild(new XMLElement('legend', __('Main Definition')));
@@ -249,13 +258,13 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
             'fields[title]', $fields['title']
         ));
         $div_columns->appendChild($label);
-       
+
         // Action
 
         $label = Widget::Label(__('Action'), null, 'column');
         $label->appendChild(Widget::Select(
             'fields[action]', $this->optionsArray($this->routeActions(true), $fields['action'])
-        )); 
+        ));
         $div_columns->appendChild($label);
 
         $fieldset->appendChild($div_columns);
@@ -270,7 +279,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         }
 
         $div_columns->appendChild($label);
-        
+
         // Path to
 
         $label = Widget::Label(__('Path To'), null, 'column');
@@ -287,14 +296,13 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         // Path parameter conditions
 
         $blueprint = array(
-            'legend' => __('Path Parameter Conditions'),
-            'legend-id' => 'parameters-legend',
             'base_field' => 'param_tests',
             'name_label' => __('Parameter Name'),
             'templates' => array(
                 // Type test
                 'type' => array(
                     'data_name' => 'Type Test',
+                    'data_type' => 'type',
                     'header' => __('Type Test'),
                     'value_label' => __('Type'),
                     'value_options' => array(
@@ -304,64 +312,172 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                 ),
                 // Regexp match
                 'regexp' => array(
+                    'data_name' => 'Regexp Test',
+                    'data_type' => 'regexp',
                     'header' => __('Regexp Match'),
                     'value_label' => __('PCRE String')
                 )
             ),
         );
+        $base_field = 'param_tests';
+        $input_array_action = "fields[$base_field][action][]";
+        $input_array_value = "fields[$base_field][value][]";
 
-        $this->Form->appendChild($this->conditionFieldset($blueprint, $fields['param_tests']));
+        $fieldset = new XMLElement('fieldset');
+        $fieldset->setAttribute('class', 'settings');
+        $fieldset->appendChild(new XMLElement(
+        'legend',
+            __('Path Parameter Conditions'),
+            array('id' => 'parameters-legend')
+        ));
 
-
-        // Request/server variable conditions----------------------------------------------------
-
-        $blueprint = array(
-            'legend' => __('Request/Server Variable Conditions'),
-            'base_field' => 'var_tests',
-            'name_label' => __('Variable Name'),
-            'templates' => array(
-                // Status test
-                'status' => array(
-                    //'data_name' => 'Status Test',
-                    'header' => __('Status Test'),
-                    'value_label' => __('Status'),
-                    'value_options' => array(
-                        'present' => __('Variable exists'),
-                        'string' => __('Is a non-empty string'),
-                        'numeric' => __('Is a numeric string'),
-                        'non-numeric' => __('Is a non-numeric string'),
-                        'absent' => __('Does not exist')
-                    )
-                ),
-                'equality' => array(
-                    'header' => __('Equality Test'),
-                    'value_label' => __('Value')
-                ),
-                'inequality' => array(
-                    'header' => __('Inequality Test'),
-                    'value_label' => __('Value')
-                ),
-                'regexp' => array(
-                    'header' => __('Regexp Match'),
-                    'value_label' => __('PCRE String')
-                )
-            ),
+        $tmpl_name_field = Widget::Label(
+            $blueprint['name_label'],
+            Widget::Input("fields[$base_field][name][]"),
+            'column'
         );
-        $this->Form->appendChild($this->conditionFieldset($blueprint, $fields['var_tests']));
+
+        $group = new XMLElement(
+            'div', null,
+            array('class' => 'frame', 'id' => 'parameters-duplicator')
+        );
+        $ol = new XMLElement(
+            'ol', null,
+            array(
+                'data-add' => __('Add condition'),
+                'data-remove' => __('Remove condition')
+            )
+        );
+
+        foreach ($blueprint['templates'] as $action => $template)
+        {
+            $li = new XMLElement(
+                'li', null,
+                array(
+                'class' => 'template parameter-' . $template['data_type'],
+                'data-name' => $template['data_name'],
+                'data-type' => $template['data_type']
+                )
+            );
+            $header = new XMLElement('header', null, array('class' => 'frame-header', 'data-name' => $template['header']));
+            $header->appendChild(new XMLElement(
+                'h4',
+                '<strong>New Parameter</strong><span>' . $template['header'] . '</span>'
+            ));
+            $li->appendChild($header);
+            // Action field (hidden)
+            $li->appendChild(Widget::Input($input_array_action, $action, 'hidden'));
+
+            $div_columns = new XMLElement('div');
+            $div_columns->setAttribute('class', 'two columns');
+
+            // Name field
+            $div_columns->appendChild($tmpl_name_field);
+
+            // Value field
+            $label = Widget::Label($template['value_label'], null, 'column');
+            if (isset($template['value_options'])) {
+                $label->appendChild(
+                    Widget::Select($input_array_value, $this->optionsArray($template['value_options']))
+                );
+            } else {
+                $label->appendChild(Widget::Input($input_array_value));
+            }
+            $div_columns->appendChild($label);
+            $li->appendChild($div_columns);
+            $ol->appendChild($li);
+        }
+
+        if (!empty($fields['param_tests'])) {
+            $param_tests = $fields['param_tests'];
+            for (
+                $row_num = 0;
+                list($action, $name, $value) = array_column($param_tests, $row_num);
+                $row_num++
+            ) {
+                $template = $blueprint['templates'][$action];
+                $li = new XMLElement('li');
+                $li->setAttribute('class', 'instance expanded');
+                $header = new XMLElement('header', null, array('class' => 'frame-header'));
+                $header->appendChild(new XMLElement(
+                    'h4',
+                    '<strong>' . $name . '</strong><span>' . $template['header'] . '</span>',
+                    array('data-name' => $template['header'])
+                ));
+                $li->appendChild($header);
+                //$li->appendChild(new XMLElement('header', $template['header'], array('class' => 'frame-header')));
+                // Action field (hidden)
+                $li->appendChild(Widget::Input($input_array_action, $action, 'hidden'));
+
+                $div_columns = new XMLElement('div');
+                $div_columns->setAttribute('class', 'two columns');
+                $label = Widget::Label(
+                    $blueprint['name_label'],
+                    Widget::Input("fields[$base_field][name][]", $name),
+                    'column'
+                );
+                //if (!empty($this->_errors)) {print_r($this->_errors); die;}
+                if (isset($this->_errors[$base_field . $row_num . 'name'])) {
+                    $label = Widget::Error($label, $this->_errors[$base_field . $row_num . 'name']);
+                }
+                $div_columns->appendChild($label);
+                $label = Widget::Label($template['value_label'], null, 'column');
+                if (isset($template['value_options'])) {
+                    $label->appendChild(
+                        Widget::Select(
+                            $input_array_value, $this->optionsArray($template['value_options'], $value)
+                        )
+                    );
+                } else {
+                    $label->appendChild(Widget::Input($input_array_value, $value));
+                    if (isset($this->_errors[$base_field . $row_num . 'value'])) {
+                        $label = Widget::Error($label, $this->_errors[$base_field . $row_num . 'value']);
+                    }
+                }
+                $div_columns->appendChild($label);
+                $li->appendChild($div_columns);
+                $ol->appendChild($li);
+            }
+        }
+        $group->appendChild($ol);
+        $fieldset->appendChild($group);
+        $this->Form->appendChild($fieldset);
+
+        // PHP box
+
+        $fieldset = new XMLElement(
+            'fieldset',
+            null,
+            array('id' => 'php', 'class' => 'settings')
+        );
+        if (!$fields['include_php']) {
+            $fieldset->setAttribute('style', 'display: none');
+        }
+        $fieldset->appendChild(Widget::Input('fields[include_php]', $fields['include_php'], 'hidden'));
+        $fieldset->appendChild(new XMLElement(
+            'legend', __('PHP')
+        ));
+        $label = Widget::Label(__('PHP Code'), null, 'column');
+        $label->appendChild(Widget::TextArea(
+            'fields[php]', 5, 80, $fields['php'], array('id' => 'php-code', 'style' => 'resize: vertical')
+        ));
+        $fieldset->appendChild($label);
+        $this->Form->appendChild($fieldset);
+
 
         // Controls -----------------------------------------------------------
 
         /**
-         * After all Page related Fields have been added to the DOM, just before the
-         * actions.
-         *
-         * @delegate AppendPageContent
-         * @param string $context
-         *  '/blueprints/pages/'
-         * @param XMLElement $form
-         * @param array $fields
-         * @param array $errors
-         */
+        * After all Page related Fields have been added to the DOM, just before the
+        * actions.
+        *
+        * @delegate AppendPageContent
+        * @param string $context
+        *  '/blueprints/pages/'
+        * @param XMLElement $form
+        * @param array $fields
+        * @param array $errors
+        */
 /*        Symphony::ExtensionManager()->notifyMembers(
             'AppendPageContent',
             '/blueprints/pages/',
@@ -389,26 +505,26 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
     }
 
     /**
-     * Action index
-     */
+    * Action index
+    */
     public function __actionIndex()
     {
         $checked = (is_array($_POST['items'])) ? array_keys($_POST['items']) : null;
 
         if (is_array($checked) && !empty($checked)) {
             /**
-             * Extensions can listen for any custom actions that were added
-             * through `AddCustomPreferenceFieldsets` or `AddCustomActions`
-             * delegates.
-             *
-             * @delegate CustomActions
-             * @since Symphony 2.3.2
-             * @param string $context
-             *  '/blueprints/pages/'
-             * @param array $checked
-             *  An array of the selected rows. The value is usually the ID of the
-             *  the associated object.
-             */
+            * Extensions can listen for any custom actions that were added
+            * through `AddCustomPreferenceFieldsets` or `AddCustomActions`
+            * delegates.
+            *
+            * @delegate CustomActions
+            * @since Symphony 2.3.2
+            * @param string $context
+            *  '/blueprints/pages/'
+            * @param array $checked
+            *  An array of the selected rows. The value is usually the ID of the
+            *  the associated object.
+            */
             Symphony::ExtensionManager()->notifyMembers('CustomActions', '/blueprints/url-connections/', array(
                 'checked' => $checked
             ));
@@ -442,13 +558,13 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
             $this->_errors = array();
 
             $db_fields = array_fill_keys(
-                array('title', 'action', 'path_from', 'path_to', 'param_tests', 'var_tests', 'num_conditions', 'run_data'), null
+                array('title', 'action', 'path_from', 'path_to', 'param_tests', 'php', 'run_data'), null
             );
 
             try {
                 $title = trim($fields['title']);
                 $db_fields['title'] = ($title ? $title : 'Noname');
-                
+
                 $db_fields['action'] = $fields['action'];
 
                 $path_from = trim($fields['path_from']);
@@ -463,21 +579,21 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                         $this->setError('path_from', self::E_PARAM_DUP);
                     }
                 }
-    
+
                 $path_to = trim($fields['path_to']);
                 $db_fields['path_to'] = $path_to;
                 if (!$path_to) {
                     $this->setError('path_to', self::E_REQ_FIELD);
                 }
 
+                $db_fields['include_php'] = $fields['include_php'];
+                $db_fields['php'] = $fields['php'];
+
                 $run_data = array(
                     'from_regexp' => null,
                     'param_names' => array(),
                     'param_type_tests' => array(),
-                    'var_tests' => array()
                 );
-
-                $db_fields['num_conditions'] = 0;
 
                 // Parameter conditions
 
@@ -516,35 +632,6 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                     }
 
                     $db_fields['param_tests'] = serialize(array('action' => $actions, 'name' => $names, 'value' => $values));
-                    $db_fields['num_conditions'] += $row_num;
-                }
- 
-                // Request/server variable conditions
-
-                if (isset($fields['var_tests'])) {
-                    $actions = $fields['var_tests']['action'];
-                    $names = $fields['var_tests']['name'];
-                    $values = $fields['var_tests']['value'];
-                    for ($row_num = 0; $row_num < count($actions); $row_num++) {
-                        if (!($name = trim($names[$row_num]))) {
-                            $this->setError('var_tests' . $row_num . 'name', self::E_REQ_FIELD);
-                        }
-                        if (!($value = trim($values[$row_num]))) {
-                            $this->setError('var_tests' . $row_num . 'value', self::E_REQ_FIELD);
-                            //$this->_errors['var_tests' . $row_num . 'value'] = self::E_REQ_FIELD;
-                        }
-                        $action = $actions[$row_num];
-                        if (!isset($run_data['var_tests'][$name])) {
-                            $run_data['var_tests'][$name] = array($action, $value);
-                        } else {
-                            $this->setError('var_tests' . $row_num . 'name', self::E_VAR_USED);
-                            //$this->_errors['var_tests' . $row_num . 'name'] = self::E_VAR_USED;
-                        }
-                        $names[$row_num] = $name;
-                        $values[$row_num] = $value;
-                    }
-                    $db_fields['var_tests'] = serialize(array('action' => $actions, 'name' => $names, 'value' => $values));
-                    $db_fields['num_conditions'] += $row_num;
                 }
 
                 $path_structure = trim($fields['path_from'], '/');
@@ -689,122 +776,6 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         return preg_replace('/[^\w\-]/', '', $string);
     }
 
-    function conditionFieldset($blueprint, $conditions = array())
-    {
-        $base_field = $blueprint['base_field'];
-        $input_array_action = "fields[$base_field][action][]";
-        $input_array_value = "fields[$base_field][value][]";
-
-        $fieldset = new XMLElement('fieldset');
-        $fieldset->setAttribute('class', 'settings');
-        $fieldset->appendChild(new XMLElement(
-	  'legend',
-	  __($blueprint['legend']),
-	  array('id' => 'parameters-duplicator')
-	));
-
-        $tmpl_name_field = Widget::Label(
-            $blueprint['name_label'],
-            Widget::Input("fields[$base_field][name][]"),
-            'column'
-        );
-
-        $group = new XMLElement('div');
-        $group->setAttribute('class', 'frame');
-        $group->setAttribute('id', $base_field . '-duplicator');
-        $ol = new XMLElement('ol');
-        $ol->setAttribute('data-add', __('Add condition'));
-        $ol->setAttribute('data-remove', __('Remove condition'));
-
-        foreach ($blueprint['templates'] as $action => $template)
-        {
-            $li = new XMLElement('li');
-            $li->setAttribute('class', 'template');
-            $li->setAttribute('data-name', $template['data_name']);
-            $li->setAttribute('data-type', $template['data_type']);
-            $header = new XMLElement('header');
-            $header->appendChild(new XMLElement(
-                'h4',
-                '<strong>New Condition</strong><span>' . $template['header'] . '</span>',
-                array('class' => 'frame-header', 'data-name' => $template['header'])
-            ));
-            $li->appendChild($header);
-            // Action field (hidden)
-            $li->appendChild(Widget::Input($input_array_action, $action, 'hidden'));
-
-            $div_columns = new XMLElement('div');
-            $div_columns->setAttribute('class', 'two columns');
-            
-            // Name field
-            $div_columns->appendChild($tmpl_name_field);
-
-            // Value field
-            $label = Widget::Label($template['value_label'], null, 'column');
-            if (isset($template['value_options'])) {
-                $label->appendChild(
-                    Widget::Select($input_array_value, $this->optionsArray($template['value_options']))
-                );
-            } else {
-                $label->appendChild(Widget::Input($input_array_value));
-            }
-            $div_columns->appendChild($label);
-            $li->appendChild($div_columns);
-            $ol->appendChild($li);
-        }
-        if (!empty($conditions)) {
-            for (
-                $row_num = 0;
-                list($action, $name, $value) = array_column($conditions, $row_num);
-                $row_num++
-            ) {
-                $template = $blueprint['templates'][$action];
-                $li = new XMLElement('li');
-                $li->setAttribute('class', 'instance expanded');
-                $header = new XMLElement('header');
-                $header->appendChild(new XMLElement(
-                    'h4',
-                    '<strong>' . $name . '</strong><span>' . $template['header'] . '</span>',
-                    array('class' => 'frame-header', 'data-name' => $template['header'])
-                ));
-                $li->appendChild($header);
-                //$li->appendChild(new XMLElement('header', $template['header'], array('class' => 'frame-header')));
-                // Action field (hidden)
-                $li->appendChild(Widget::Input($input_array_action, $action, 'hidden'));
-
-                $div_columns = new XMLElement('div');
-                $div_columns->setAttribute('class', 'two columns');
-                $label = Widget::Label(
-                    $blueprint['name_label'],
-                    Widget::Input("fields[$base_field][name][]", $name),
-                    'column'
-                );
-                //if (!empty($this->_errors)) {print_r($this->_errors); die;}
-                if (isset($this->_errors[$base_field . $row_num . 'name'])) {
-                    $label = Widget::Error($label, $this->_errors[$base_field . $row_num . 'name']);
-                }
-                $div_columns->appendChild($label);
-                $label = Widget::Label($template['value_label'], null, 'column');
-                if (isset($template['value_options'])) {
-                    $label->appendChild(
-                        Widget::Select(
-                            $input_array_value, $this->optionsArray($template['value_options'], $value)
-                        )
-                    );
-                } else {
-                    $label->appendChild(Widget::Input($input_array_value, $value));
-                    if (isset($this->_errors[$base_field . $row_num . 'value'])) {
-                        $label = Widget::Error($label, $this->_errors[$base_field . $row_num . 'value']);
-                    }
-                }
-                $div_columns->appendChild($label);
-                $li->appendChild($div_columns);
-                $ol->appendChild($li);
-            }
-        }
-        $group->appendChild($ol);
-        $fieldset->appendChild($group);
-        return $fieldset;
-    }
 
     function routeActions($full = false)
     {
