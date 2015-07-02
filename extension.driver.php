@@ -8,18 +8,18 @@ class extension_URL_Connector extends Extension
     {
         Symphony::Database()->query("
             CREATE TABLE IF NOT EXISTS `tbl_url_connections` (
-                `id` int(11) unsigned NOT NULL auto_increment,
-                `title` varchar(255) DEFAULT NULL,
-                `path_from` varchar(255) DEFAULT NULL,
-                `path_to` varchar(255) DEFAULT NULL,
-                `action` varchar(255) DEFAULT NULL,
-                `param_tests` varchar(1023) DEFAULT NULL,
-                `include_php` bit DEFAULT FALSE,
-                `php` varchar(8191) DEFAULT NULL,
-                `run_data` varchar(4095) DEFAULT NULL,
-                `sortorder` int(11) unsigned NOT NULL,
+                `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+                `title` VARCHAR(255) DEFAULT NULL,
+                `path_from` VARCHAR(255) DEFAULT NULL,
+                `path_to` VARCHAR(255) DEFAULT NULL,
+                `action` VARCHAR(255) DEFAULT NULL,
+                `param_tests` VARCHAR(1023) DEFAULT NULL,
+                `include_php` ENUM('Y','N') DEFAULT 'N',
+                `php` VARCHAR(8191) DEFAULT NULL,
+                `run_data` VARCHAR(4095) DEFAULT NULL,
+                `sortorder` INT(11) UNSIGNED NOT NULL,
                 PRIMARY KEY (`id`)
-            )  ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+            )  ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
         ");
     }
 
@@ -120,7 +120,7 @@ class extension_URL_Connector extends Extension
         $ignores = array('GET' => 'route post', 'POST' => 'route get');
         $ignore = $ignores[$_SERVER['REQUEST_METHOD']];
         $path_given = trim($context['page'], '/');
-        $sql = "SELECT path_to, action, php, run_data FROM `tbl_url_connections` ORDER BY sortorder";
+        $sql = "SELECT path_to, action, include_php, php, run_data FROM `tbl_url_connections` ORDER BY sortorder";
         $routes = Symphony::Database()->fetch($sql);
         $route_matched = null;
 
@@ -160,7 +160,7 @@ class extension_URL_Connector extends Extension
             if (!$conditions_met) continue;
 
             // Execute PHP if there is any
-            if ($route['php']) {
+            if ($route['include_php'] == 'Y' && $route['php']) {
                 if ($this->evalPHP($route['php']) === false) continue;
             }
 

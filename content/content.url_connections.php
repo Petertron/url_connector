@@ -4,11 +4,6 @@
 * @package content
 */
 
-/**
-* Developers can create new Frontend page routes from this class. It provides
-* an index view of all the pages in this Symphony install as well as the
-* forms for the creation/editing of a Page
-*/
 require_once TOOLKIT . '/class.administrationpage.php';
 require_once TOOLKIT . '/class.resourcemanager.php';
 
@@ -54,8 +49,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
             array(__('Name'), 'col'),
             array(__('Path From'), 'col'),
             array(__('Path To'), 'col'),
-            array(__('Action'), 'col')/*,
-            array(__('Conditions'), 'col')*/
+            array(__('Action'), 'col')
         );
         $aTableBody = array();
 
@@ -91,12 +85,6 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                 $route_actions = $this->routeActions();
 
                 $col_action = Widget::TableData($route_actions[$route['action']]);
-
-                /*if ((int)$route['num_conditions'] > 0) {
-                    $col_conditions = Widget::TableData($route['num_conditions']);
-                } else {
-                    $col_conditions = Widget::TableData(__('None'), 'inactive');
-                }*/
 
                 $aTableBody[] = Widget::TableRow(
                     array($col_title, $col_route_from, $col_route_to, $col_action, $col_conditions),
@@ -236,15 +224,6 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
 
         $this->appendSubheading(!empty($title) ? $title : __('Untitled'));
 
-        $checkbox = Widget::Input('php', 'yes', 'checkbox', array('id' => 'php-toggle'));
-        if ($fields['include_php']) {
-            $checkbox->setAttribute('checked', 'checked');
-        }
-        $this->Context->prependChild(new XMLElement(
-            'label',
-            $checkbox->generate() . ' ' . __('Include PHP field'),
-            array('class' => 'actions')
-        ));
         $fieldset = new XMLElement('fieldset');
         $fieldset->setAttribute('class', 'settings');
         $fieldset->appendChild(new XMLElement('legend', __('Main Definition')));
@@ -444,23 +423,32 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         $this->Form->appendChild($fieldset);
 
         // PHP box
-
+    //echo $fields['include_php']; die;
         $fieldset = new XMLElement(
             'fieldset',
             null,
-            array('id' => 'php', 'class' => 'settings')
+            array('class' => 'settings')
         );
-        if (!$fields['include_php']) {
-            $fieldset->setAttribute('style', 'display: none');
-        }
-        $fieldset->appendChild(Widget::Input('fields[include_php]', $fields['include_php'], 'hidden'));
         $fieldset->appendChild(new XMLElement(
             'legend', __('PHP')
         ));
-        $label = Widget::Label(__('PHP Code'), null, 'column');
-        $label->appendChild(Widget::TextArea(
-            'fields[php]', 5, 80, $fields['php'], array('id' => 'php-code', 'style' => 'resize: vertical')
+        //$fieldset->appendChild(Widget::Input('fields[include_php]', 'N', 'hidden'));
+        $checkbox = Widget::Input('fields[include_php]', 'Y', 'checkbox', array('id' => 'include-php'));
+        if ($fields['include_php'] == 'Y') {
+            $checkbox->setAttribute('checked', 'checked');
+        }
+        $fieldset->appendChild(new XMLElement(
+            'label',
+            $checkbox->generate() . ' ' . __('Include PHP field')
         ));
+
+        $label = Widget::Label(__('PHP Code'), null, 'column', 'php-box');
+        $label->appendChild(Widget::TextArea(
+            'fields[php]', 5, 80, $fields['php'], array('style' => 'resize: vertical')
+        ));
+        if ($fields['include_php'] == 'N') {
+            $label->setAttribute('style', 'display: none');
+        }
         $fieldset->appendChild($label);
         $this->Form->appendChild($fieldset);
 
@@ -558,7 +546,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
             $this->_errors = array();
 
             $db_fields = array_fill_keys(
-                array('title', 'action', 'path_from', 'path_to', 'param_tests', 'php', 'run_data'), null
+                array('title', 'action', 'path_from', 'path_to', 'param_tests', 'include_php', 'php', 'run_data'), null
             );
 
             try {
@@ -586,7 +574,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                     $this->setError('path_to', self::E_REQ_FIELD);
                 }
 
-                $db_fields['include_php'] = $fields['include_php'];
+                $db_fields['include_php'] = isset($fields['include_php']) ? 'Y' : 'N';
                 $db_fields['php'] = $fields['php'];
 
                 $run_data = array(

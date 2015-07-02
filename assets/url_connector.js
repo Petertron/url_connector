@@ -67,13 +67,11 @@
             label.parents('.instance').find('.frame-header strong').text(value);
         });
 
-        $('#php-toggle').click(function() {
+        $('input[name="fields[include_php]"]').change(function() {
             if (this.checked) {
-                $('input[name="fields[include_php]"]').val(1);
-                $('#php').show();
+                $('#php-box').show();
             } else {
-                $('input[name="fields[include_php]"]').val(null);
-                $('#php').hide();
+                $('#php-box').hide();
             }
         });
 
