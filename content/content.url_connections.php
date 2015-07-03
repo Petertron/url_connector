@@ -294,7 +294,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                     'data_name' => 'Regexp Test',
                     'data_type' => 'regexp',
                     'header' => __('Regexp Match'),
-                    'value_label' => __('PCRE String')
+                    'value_label' => __('PCRE String, omit the containing slashes')
                 )
             ),
         );
@@ -434,7 +434,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         ));
         //$fieldset->appendChild(Widget::Input('fields[include_php]', 'N', 'hidden'));
         $checkbox = Widget::Input('fields[include_php]', 'Y', 'checkbox', array('id' => 'include-php'));
-        if ($fields['include_php'] == 'Y') {
+        if ($fields['include_php']) {
             $checkbox->setAttribute('checked', 'checked');
         }
         $fieldset->appendChild(new XMLElement(
@@ -446,7 +446,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         $label->appendChild(Widget::TextArea(
             'fields[php]', 5, 80, $fields['php'], array('style' => 'resize: vertical')
         ));
-        if ($fields['include_php'] == 'N') {
+        if (!$fields['include_php']) {
             $label->setAttribute('style', 'display: none');
         }
         $fieldset->appendChild($label);
@@ -574,7 +574,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                     $this->setError('path_to', self::E_REQ_FIELD);
                 }
 
-                $db_fields['include_php'] = isset($fields['include_php']) ? 'Y' : 'N';
+                $db_fields['include_php'] = array_key_exists('include_php', $fields) ? 'Y' : '';
                 $db_fields['php'] = $fields['php'];
 
                 $run_data = array(

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<extension id="url_connector" status="unreleased" xmlns="http://symphony-cms.com/schemas/extension/1.0">
+<extension id="url_connector" status="released" xmlns="http://symphony-cms.com/schemas/extension/1.0">
     <name>URL Connector</name>
     <description>URL rerouting/redirecton.</description>
     <repo type="github">https://github.com/Petertron/url_connector</repo>
     <!--<url type="discuss">http://symphony-cms.com/discuss/thread/</url>-->
     <types>
-        <type></type>
+        <type>Routing</type>
     </types>
     <authors>
         <author>

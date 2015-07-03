@@ -69,9 +69,9 @@
 
         $('input[name="fields[include_php]"]').change(function() {
             if (this.checked) {
-                $('#php-box').show();
+                $('#php-box').slideDown();
             } else {
-                $('#php-box').hide();
+                $('#php-box').slideUp();
             }
         });
 

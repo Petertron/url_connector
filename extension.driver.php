@@ -14,7 +14,7 @@ class extension_URL_Connector extends Extension
                 `path_to` VARCHAR(255) DEFAULT NULL,
                 `action` VARCHAR(255) DEFAULT NULL,
                 `param_tests` VARCHAR(1023) DEFAULT NULL,
-                `include_php` ENUM('Y','N') DEFAULT 'N',
+                `include_php` CHAR(1) DEFAULT NULL,
                 `php` VARCHAR(8191) DEFAULT NULL,
                 `run_data` VARCHAR(4095) DEFAULT NULL,
                 `sortorder` INT(11) UNSIGNED NOT NULL,
@@ -160,7 +160,7 @@ class extension_URL_Connector extends Extension
             if (!$conditions_met) continue;
 
             // Execute PHP if there is any
-            if ($route['include_php'] == 'Y' && $route['php']) {
+            if ($route['include_php'] && $route['php']) {
                 if ($this->evalPHP($route['php']) === false) continue;
             }
 
