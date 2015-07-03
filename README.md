@@ -7,6 +7,7 @@ Symphony users will probably know what URL routing is. To view/edit routes selec
 
 ### Routes
 Here is an example route:
+
 Source URL: `/articles/{title}/`, destination URL: `article-page/{title}`.
 
 Braces are used to enclose path parameters. Parameters can be subjected to regular expression matching or 'type' testing where the type can be either _numeric_ or _non-numeric_.
@@ -15,6 +16,7 @@ Braces are used to enclose path parameters. Parameters can be subjected to regul
 The optional PHP field allows PHP code to be run after a URL route has been matched. This allows the request variables to be tested or modified.
 
 Example PHP code:
+
     // Allow connection only if this is an AJAX call.
     if (!isset($_POST['ajax'])) {
         return false; // Move on to next route
