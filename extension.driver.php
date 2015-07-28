@@ -48,6 +48,11 @@ class extension_URL_Connector extends Extension
     {
         return array(
             array(
+                'page' => '/all/',
+                'delegate' => 'ModifySymphonyLauncher',
+                'callback' => 'modifyLauncher'
+            ),
+            array(
                 'page' => '/backend/',
                 'delegate' => 'AdminPagePostCallback',
                 'callback' => 'postCallback'
@@ -68,6 +73,16 @@ class extension_URL_Connector extends Extension
                 'callback' => 'paramsResolve'
             )
         );
+    }
+
+    public function modifyLauncher()
+    {
+        $page = trim($_GET['symphony-page'], '/');
+        if (!$page) return;
+//echo $page; die;
+        if ($page == 'blueprints/url-connections') {
+            $_GET['symphony-page'] = '/extension/url_connector/url_connections';
+        }
     }
 
     public function postCallback($context)
