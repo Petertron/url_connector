@@ -14,7 +14,12 @@
         </author>
     </authors>
     <releases>
-        <release version="0.1.0" date="2015-07-03" min="2.5" max="2.6.99">
+        <release version="0.1.1" date="2015-07-29" min="2.5" max="3.0">
+            - Routing bug fixed.
+            - Modified for to be compatible with Symphony 3.0.0-alpha.1.
+        </release>
+        <release version="0.1.0" date="2015-07-03" min="2.5" max="2.6.2">
+            - First release.
         </release>
     </releases>
 </extension>

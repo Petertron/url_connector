@@ -1,5 +1,6 @@
 (function($, Symphony) {
-    Symphony.View.add('/blueprints/url-connections/:action:/:id:/:status:', function(action, id, status) {
+    //Symphony.View.add('/extension/url_connector/url-connections/:action:/:id:/:status:', function(action, id, status) {
+    Symphony.View.add('/extension/url_connector/url_connections/:action:/:id:/:status:', function(action, id, status) {
         var legend, expand, collapse, toggle;
 
         var duplicator = $('#parameters-duplicator');
@@ -49,7 +50,7 @@
         duplicator.on('constructshow.duplicator expandstop.collapsible', '.instance', function() {
             var item = $(this);
             if (!item.hasClass('js-animate-all')) {
-                    $(this).find('input:visible:first').trigger('focus.admin');
+                $(this).find('input:visible:first').trigger('focus.admin');
             }
         });
 

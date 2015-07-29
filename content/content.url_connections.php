@@ -7,7 +7,7 @@
 require_once TOOLKIT . '/class.administrationpage.php';
 require_once TOOLKIT . '/class.resourcemanager.php';
 
-class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
+class contentExtensionUrl_ConnectorUrl_Connections extends AdministrationPage
 {
     const E_REQ_FIELD = 1;
     const E_PARAM_DUP = 2;
@@ -41,7 +41,8 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
         $this->setTitle(__('%1$s &ndash; %2$s', array(__('URL Connections'), __('Symphony'))));
 
         $this->appendSubheading(__('URL Connections'), Widget::Anchor(
-            __('Create New'), Administration::instance()->getCurrentPageURL() . 'new/',
+            //__('Create New'), Administration::instance()->getCurrentPageURL() . 'new/',
+            __('Create New'), SYMPHONY_URL . '/blueprints/url-connections/new/',
             __('Create a new URL connection'), 'create button', null, array('accesskey' => 'c')
         ));
 
@@ -625,7 +626,7 @@ class contentExtensionURL_ConnectorURL_Connections extends AdministrationPage
                 $path_structure = trim($fields['path_from'], '/');
                 if (isset($path_param_matches)) {
                     foreach ($path_param_matches as $match) {
-                        $name = rtrim(ltrim($name, '{'), '}');
+                        $name = rtrim(ltrim($match, '{'), '}');
                         $run_data['param_names'][] = $name;
                         $regexp = isset($param_regexps[$name]) ? '(' . $param_regexps[$name] . ')' : '([\w\-:;@~!\[\](){}]+)';
                         $path_structure = str_replace($match, $regexp, $path_structure);

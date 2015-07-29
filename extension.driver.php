@@ -1,6 +1,6 @@
 <?php
 
-class extension_URL_Connector extends Extension
+class extension_Url_Connector extends Extension
 {
     private $_has_run = false;
 
@@ -53,11 +53,6 @@ class extension_URL_Connector extends Extension
                 'callback' => 'modifyLauncher'
             ),
             array(
-                'page' => '/backend/',
-                'delegate' => 'AdminPagePostCallback',
-                'callback' => 'postCallback'
-            ),
-            array(
                 'page' => '/blueprints/pages/',
                 'delegate' => 'AppendPageContent',
                 'callback' => 'appendPageContent'
@@ -78,33 +73,11 @@ class extension_URL_Connector extends Extension
     public function modifyLauncher()
     {
         $page = trim($_GET['symphony-page'], '/');
-        if (!$page) return;
-//echo $page; die;
-        if ($page == 'blueprints/url-connections') {
-            $_GET['symphony-page'] = '/extension/url_connector/url_connections';
-        }
-    }
 
-    public function postCallback($context)
-    {
-        $driver = $context['callback']['driver'];
-        if ($driver == 'blueprintsurl-connections') {
-            $values = array(
-                'driver' => 'blueprintsurl-connections',
-                'driver_location' => EXTENSIONS . '/url_connector/content/content.url_connections.php',
-                'pageroot' => '/extensions/url_connector/content/',
-                'classname' => 'contentExtensionURL_ConnectorURL_Connections'
-            );
-        } else if ($driver == 'ajaxreorder' && $context['parts'][2] == 'blueprints/url-connections') {
-            $values = array(
-                'driver' => 'ajaxreorder',
-                'driver_location' => EXTENSIONS . '/url_connector/content/content.ajaxreorder.php',
-                'pageroot' => '/extensions/url_connector/content/',
-                'classname' => 'contentExtensionURL_ConnectorAjax_Reorder'
-            );
-        }
-        if (isset($values)) {
-            $context['callback'] = array_merge($context['callback'], $values);
+        if ($page == 'ajax/reorder/extension/url_connector/url_connections') {
+            $_GET['symphony-page'] = '/extension/url_connector/ajax_reorder/';
+        } elseif (preg_match('/^blueprints\/url-connections/', $page, $match)) {
+            $_GET['symphony-page'] = '/extension/url_connector/url_connections' . substr($page, strlen($match[0]));
         }
     }
 
@@ -139,8 +112,6 @@ class extension_URL_Connector extends Extension
         $routes = Symphony::Database()->fetch($sql);
         $route_matched = null;
 
-        //foreach ($routes as $route) {
-        //while (!$route_matched && $route = each($routes)[1]) {
         for (;
             !$route_matched && $route = current($routes);
             next($routes)
@@ -196,7 +167,6 @@ class extension_URL_Connector extends Extension
                 $route_matched
             );
             $action_type = explode(' ', $route['action']);
-            //print_r($action_type); die;
             switch ($action_type[0]) {
                 case 'route':
                     $context['page'] = $route_matched;
